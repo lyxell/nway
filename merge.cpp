@@ -35,51 +35,65 @@ longest_common_subsequence(const std::string& a, const std::string& b) {
     return matchings;
 }
 
-int diff3(const std::string& o, const std::string& a, const std::string& b) {
-    auto MA = longest_common_subsequence(o, a);
-    auto MB = longest_common_subsequence(o, b);
+std::vector<std::tuple<std::string,std::string,std::string>> diff3(const std::string& O, const std::string& A, const std::string& B) {
+    std::vector<std::tuple<std::string,std::string,std::string>> result;
+    auto MA = longest_common_subsequence(O, A);
+    auto MB = longest_common_subsequence(O, B);
     size_t lO = 0;
     size_t lA = 0;
     size_t lB = 0;
     while (true) {
         int i = 0;
-        while (lO + i < o.size() && MA.find(lO + i) != MA.end() && MA[lO + i] == lA + i && MB.find(lO + i) != MB.end() && MB[lO + i] == lB + i) {
+        while (lO + i < O.size() && MA.find(lO + i) != MA.end() && MA[lO + i] == lA + i && MB.find(lO + i) != MB.end() && MB[lO + i] == lB + i) {
             i++;
         }
         if (i == 0) {
-            size_t x = lO + 1;
-            while (MA.find(x) == MA.end() || MB.find(x) == MB.end()) {
-                x++;
-                if (x >= o.size()) break;
+            size_t o = lO + 1;
+            while (MA.find(o) == MA.end() || MB.find(o) == MB.end()) {
+                o++;
+                if (o >= O.size()) break;
             }
-            if (MA.find(x) == MA.end() || MB.find(x) == MB.end()) break;
-            std::cout << o.substr(lO, x     - lO) << " ";
-            std::cout << a.substr(lA, MA[x] - lA) << " ";
-            std::cout << b.substr(lB, MB[x] - lB) << std::endl;
-            lO = x;
-            lA = MA[x];
-            lB = MB[x];
+            if (MA.find(o) == MA.end() || MB.find(o) == MB.end()) break;
+            result.emplace_back(O.substr(lO, o     - lO),
+                                A.substr(lA, MA[o] - lA),
+                                B.substr(lB, MB[o] - lB));
+            lO = o;
+            lA = MA[o];
+            lB = MB[o];
         } else {
-            std::cout << o.substr(lO, i) << " ";
-            std::cout << a.substr(lA, i) << " ";
-            std::cout << b.substr(lB, i) << std::endl;
+            result.emplace_back(O.substr(lO, i),
+                                A.substr(lA, i),
+                                B.substr(lB, i));
             lO = lO + i;
             lA = lA + i;
             lB = lB + i;
         }
     }
-    if (lO < o.size() || lA < a.size() || lB < b.size()) {
-        std::cout << o.substr(lO) << " ";
-        std::cout << a.substr(lA) << " ";
-        std::cout << b.substr(lB) << std::endl;
+    if (lO < O.size() || lA < A.size() || lB < B.size()) {
+        result.emplace_back(O.substr(lO), A.substr(lA), B.substr(lB));
     }
-    return 0;
+    return result;
 }
 
 int main() {
     std::string o = "helloworld";
-    std::string a = "hellowld";
-    std::string b = "hxxlloworld";
-    diff3(o, a, b);
+    std::string a = "helloworlda";
+    std::string b = "hxxlloworldb";
+    auto res = diff3(o, a, b);
+    for (auto [ov, oa, ob] : res) {
+        if (oa == ob) {
+            std::cout << oa << std::endl;
+        } else if (ov == oa) {
+            std::cout << ob << std::endl;
+        } else if (ov == ob) {
+            std::cout << oa << std::endl;
+        } else {
+            std::cout << "<<<<<<<" << std::endl;
+            std::cout << oa << std::endl;
+            std::cout << "=======" << std::endl;
+            std::cout << ob << std::endl;
+            std::cout << ">>>>>>>" << std::endl;
+        }
+    }
     return 0;
 }
