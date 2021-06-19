@@ -40,61 +40,61 @@ longest_common_subsequence(const std::string& a, const std::string& b) {
 using candidate = std::tuple<size_t, std::string, std::map<size_t,size_t>>;
 
 std::vector<std::tuple<std::string,std::vector<std::string>>>
-diff(const std::string& O, const std::vector<std::string>& strings) {
+diff(const std::string& original, const std::vector<std::string>& strings) {
     std::vector<std::tuple<std::string,std::vector<std::string>>> result;
     std::vector<candidate> candidates;
     for (auto& str : strings) {
-        candidates.emplace_back(0, str, longest_common_subsequence(O, str));
+        candidates.emplace_back(0, str, longest_common_subsequence(original, str));
     }
-    size_t lO = 0;
+    size_t original_pos = 0;
     while (true) {
         int i = 0;
-        auto agree = [&lO, &i](const candidate& cand) {
+        auto agree = [&original_pos, &i](const candidate& cand) {
             const auto& [pos, str, map] = cand;
-            auto it = map.find(lO + i);
+            auto it = map.find(original_pos + i);
             return it != map.end() && it->second == pos + i;
         };
-        while (lO + i < O.size() && std::all_of(candidates.begin(), candidates.end(), agree)) {
+        while (original_pos + i < original.size() && std::all_of(candidates.begin(), candidates.end(), agree)) {
             i++;
         }
         if (i == 0) {
-            size_t o = lO + 1;
-            auto differ = [&o](const candidate& cand) {
+            size_t curr_pos = original_pos + 1;
+            auto differ = [&curr_pos](const candidate& cand) {
                 const auto& [pos, str, map] = cand;
-                return map.find(o) == map.end();
+                return map.find(curr_pos) == map.end();
             };
             while (std::any_of(candidates.begin(), candidates.end(), differ)) {
-                o++;
-                if (o >= O.size()) break;
+                curr_pos++;
+                if (curr_pos >= original.size()) break;
             }
             if (std::any_of(candidates.begin(), candidates.end(), differ)) break;
             std::vector<std::string> sequences;
             for (auto& [pos, str, map] : candidates) {
-                sequences.emplace_back(str.substr(pos, map[o] - pos));
-                pos = map[o];
+                sequences.emplace_back(str.substr(pos, map[curr_pos] - pos));
+                pos = map[curr_pos];
             }
-            result.emplace_back(O.substr(lO, o - lO), sequences);
-            lO = o;
+            result.emplace_back(original.substr(original_pos, curr_pos - original_pos), sequences);
+            original_pos = curr_pos;
         } else {
             std::vector<std::string> sequences;
             for (auto& [pos, str, map] : candidates) {
                 sequences.emplace_back(str.substr(pos, i));
                 pos += i;
             }
-            result.emplace_back(O.substr(lO, i), sequences);
-            lO += i;
+            result.emplace_back(original.substr(original_pos, i), sequences);
+            original_pos += i;
         }
     }
     auto unconsumed = [](const candidate& cand){
         const auto& [pos, str, map] = cand;
         return pos < str.size();
     };
-    if (lO < O.size() || std::any_of(candidates.begin(), candidates.end(), unconsumed)) {
+    if (original_pos < original.size() || std::any_of(candidates.begin(), candidates.end(), unconsumed)) {
         std::vector<std::string> sequences;
         for (auto& [pos, str, map] : candidates) {
             sequences.emplace_back(str.substr(pos));
         }
-        result.emplace_back(O.substr(lO), sequences);
+        result.emplace_back(original.substr(original_pos), sequences);
     }
     return result;
 }
