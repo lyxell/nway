@@ -40,7 +40,7 @@ longest_common_subsequence(const std::string& a, const std::string& b) {
 using candidate = std::tuple<size_t, std::string, std::map<size_t,size_t>>;
 
 std::vector<std::tuple<std::string,std::vector<std::string>>>
-diff3(const std::string& O, const std::vector<std::string>& strings) {
+diff(const std::string& O, const std::vector<std::string>& strings) {
     std::vector<std::tuple<std::string,std::vector<std::string>>> result;
     std::vector<candidate> candidates;
     for (auto& str : strings) {
@@ -103,7 +103,7 @@ int main() {
     std::string o = "helloworld";
     std::string a = "helloworlda";
     std::string b = "hxxlloworldb";
-    auto res = diff3(o, {a, b});
+    auto res = diff(o, {a, b});
     for (auto [ov, x] : res) {
         auto oa = x[0];
         auto ob = x[1];
