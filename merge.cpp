@@ -39,6 +39,10 @@ longest_common_subsequence(const std::string& a, const std::string& b) {
 
 using candidate = std::tuple<size_t, std::string, std::map<size_t,size_t>>;
 
+/**
+ * diff3 algorithm generalized to any number of candidates
+ * http://www.cis.upenn.edu/~bcpierce/papers/diff3-short.pdf
+ */
 std::vector<std::tuple<std::string,std::vector<std::string>>>
 diff(const std::string& original, const std::vector<std::string>& strings) {
     std::vector<std::tuple<std::string,std::vector<std::string>>> result;
@@ -48,6 +52,7 @@ diff(const std::string& original, const std::vector<std::string>& strings) {
     }
     size_t original_pos = 0;
     while (true) {
+        /* i is the number of positions for which all strings are aligned */
         int i = 0;
         auto agree = [&original_pos, &i](const candidate& cand) {
             const auto& [pos, str, map] = cand;
@@ -58,6 +63,7 @@ diff(const std::string& original, const std::vector<std::string>& strings) {
             i++;
         }
         if (i == 0) {
+            /* unstable chunk */
             size_t curr_pos = original_pos + 1;
             auto differ = [&curr_pos](const candidate& cand) {
                 const auto& [pos, str, map] = cand;
@@ -76,6 +82,7 @@ diff(const std::string& original, const std::vector<std::string>& strings) {
             result.emplace_back(original.substr(original_pos, curr_pos - original_pos), sequences);
             original_pos = curr_pos;
         } else {
+            /* stable chunk */
             std::vector<std::string> sequences;
             for (auto& [pos, str, map] : candidates) {
                 sequences.emplace_back(str.substr(pos, i));
