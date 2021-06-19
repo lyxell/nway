@@ -2,7 +2,9 @@
 #include <vector>
 #include <map>
 #include <algorithm>
+#include <utility>
 #include <string>
+#include <tuple>
 
 std::map<size_t,size_t>
 longest_common_subsequence(const std::string& a, const std::string& b) {
@@ -35,42 +37,64 @@ longest_common_subsequence(const std::string& a, const std::string& b) {
     return matchings;
 }
 
-std::vector<std::tuple<std::string,std::string,std::string>> diff3(const std::string& O, const std::string& A, const std::string& B) {
-    std::vector<std::tuple<std::string,std::string,std::string>> result;
-    auto MA = longest_common_subsequence(O, A);
-    auto MB = longest_common_subsequence(O, B);
+using candidate = std::tuple<size_t, std::string, std::map<size_t,size_t>>;
+
+std::vector<std::tuple<std::string,std::vector<std::string>>>
+diff3(const std::string& O, const std::vector<std::string>& strings) {
+    std::vector<std::tuple<std::string,std::vector<std::string>>> result;
+    std::vector<candidate> candidates;
+    for (auto& str : strings) {
+        candidates.emplace_back(0, str, longest_common_subsequence(O, str));
+    }
     size_t lO = 0;
-    size_t lA = 0;
-    size_t lB = 0;
     while (true) {
         int i = 0;
-        while (lO + i < O.size() && MA.find(lO + i) != MA.end() && MA[lO + i] == lA + i && MB.find(lO + i) != MB.end() && MB[lO + i] == lB + i) {
+        auto agree = [&lO, &i](const candidate& cand) {
+            const auto& [pos, str, map] = cand;
+            auto it = map.find(lO + i);
+            return it != map.end() && it->second == pos + i;
+        };
+        while (lO + i < O.size() && std::all_of(candidates.begin(), candidates.end(), agree)) {
             i++;
         }
         if (i == 0) {
             size_t o = lO + 1;
-            while (MA.find(o) == MA.end() || MB.find(o) == MB.end()) {
+            auto differ = [&o](const candidate& cand) {
+                const auto& [pos, str, map] = cand;
+                return map.find(o) == map.end();
+            };
+            while (std::any_of(candidates.begin(), candidates.end(), differ)) {
                 o++;
                 if (o >= O.size()) break;
             }
-            if (MA.find(o) == MA.end() || MB.find(o) == MB.end()) break;
-            result.emplace_back(O.substr(lO, o     - lO),
-                                A.substr(lA, MA[o] - lA),
-                                B.substr(lB, MB[o] - lB));
+            if (std::any_of(candidates.begin(), candidates.end(), differ)) break;
+            std::vector<std::string> sequences;
+            for (auto& [pos, str, map] : candidates) {
+                sequences.emplace_back(str.substr(pos, map[o] - pos));
+                pos = map[o];
+            }
+            result.emplace_back(O.substr(lO, o - lO), sequences);
             lO = o;
-            lA = MA[o];
-            lB = MB[o];
         } else {
-            result.emplace_back(O.substr(lO, i),
-                                A.substr(lA, i),
-                                B.substr(lB, i));
-            lO = lO + i;
-            lA = lA + i;
-            lB = lB + i;
+            std::vector<std::string> sequences;
+            for (auto& [pos, str, map] : candidates) {
+                sequences.emplace_back(str.substr(pos, i));
+                pos += i;
+            }
+            result.emplace_back(O.substr(lO, i), sequences);
+            lO += i;
         }
     }
-    if (lO < O.size() || lA < A.size() || lB < B.size()) {
-        result.emplace_back(O.substr(lO), A.substr(lA), B.substr(lB));
+    auto unconsumed = [](const candidate& cand){
+        const auto& [pos, str, map] = cand;
+        return pos < str.size();
+    };
+    if (lO < O.size() || std::any_of(candidates.begin(), candidates.end(), unconsumed)) {
+        std::vector<std::string> sequences;
+        for (auto& [pos, str, map] : candidates) {
+            sequences.emplace_back(str.substr(pos));
+        }
+        result.emplace_back(O.substr(lO), sequences);
     }
     return result;
 }
@@ -79,8 +103,10 @@ int main() {
     std::string o = "helloworld";
     std::string a = "helloworlda";
     std::string b = "hxxlloworldb";
-    auto res = diff3(o, a, b);
-    for (auto [ov, oa, ob] : res) {
+    auto res = diff3(o, {a, b});
+    for (auto [ov, x] : res) {
+        auto oa = x[0];
+        auto ob = x[1];
         if (oa == ob) {
             std::cout << oa << std::endl;
         } else if (ov == oa) {
