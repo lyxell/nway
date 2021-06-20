@@ -1,3 +1,27 @@
+/**
+ * Copyright (c) 2021, Anton Lyxell
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions are met:
+ *
+ * 1. Redistributions of source code must retain the above copyright notice,
+ *    this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright notice,
+ *    this list of conditions and the following disclaimer in the documentation
+ *    and/or other materials provided with the distribution.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+ * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE
+ * LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
+ */
 #pragma once
 #include <algorithm>
 #include <tuple>
@@ -7,13 +31,14 @@ namespace nway {
 
 /**
  * Compute the longest common subsequence of A and B.
+ *
  * Uses O(ND) time and O(D²) space where N = |A| + |B| and D is the size of the
  * minimum edit script for A and B.
  *
  * Returns a map of matchings M such that (i,j) ∈ M ⇒ A[i] = B[j].
  *
- * See E. Myers (1986). "An O(ND) Difference Algorithm and Its Variations" for
- * reference.
+ * Based on Myers, Eugene W. "An O(ND) difference algorithm and its
+ * variations." Algorithmica 1.1-4 (1986): 251-266.
  */
 template <typename T>
 std::unordered_map<size_t, size_t> longest_common_subsequence(const T& a,
@@ -67,42 +92,46 @@ std::unordered_map<size_t, size_t> longest_common_subsequence(const T& a,
 }
 
 /**
- * diff3 algorithm generalized to any number of candidates
- * http://www.cis.upenn.edu/~bcpierce/papers/diff3-short.pdf
+ * Compute a n-way diff of a set of sequences against a common ancestor.
+ *
+ * Based on the 3-way approach described by Khanna, Sanjeev, Keshav Kunal, and
+ * Benjamin C. Pierce. "A formal investigation of diff3." International
+ * Conference on Foundations of Software Technology and Theoretical Computer
+ * Science. Springer, Berlin, Heidelberg, 2007.
  */
 template <typename T>
-std::vector<std::tuple<T, std::vector<T>>> diff(const T& original,
+std::vector<std::tuple<T, std::vector<T>>> diff(const T& ancestor,
                                                 const std::vector<T>& seqs) {
     using candidate = std::tuple<size_t, T, std::unordered_map<size_t, size_t>>;
     std::vector<std::tuple<T, std::vector<T>>> result;
     std::vector<candidate> candidates;
     for (auto& seq : seqs) {
         candidates.emplace_back(0, seq,
-                                longest_common_subsequence(original, seq));
+                                longest_common_subsequence(ancestor, seq));
     }
-    size_t original_pos = 0;
+    size_t ancestor_pos = 0;
     while (true) {
         /* i is the number of positions for which all sequences are aligned */
         int i = 0;
-        auto is_aligned = [&original_pos, &i](const candidate& cand) {
+        auto is_aligned = [&ancestor_pos, &i](const candidate& cand) {
             const auto& [pos, str, map] = cand;
-            auto it = map.find(original_pos + i);
+            auto it = map.find(ancestor_pos + i);
             return it != map.end() && it->second == pos + i;
         };
-        while (original_pos + i < original.size() &&
+        while (ancestor_pos + i < ancestor.size() &&
                std::all_of(candidates.begin(), candidates.end(), is_aligned)) {
             i++;
         }
         if (i == 0) {
             /* unstable chunk */
-            size_t curr_pos = original_pos + 1;
+            size_t curr_pos = ancestor_pos + 1;
             auto differ = [&curr_pos](const candidate& cand) {
                 const auto& [pos, str, map] = cand;
                 return map.find(curr_pos) == map.end();
             };
             while (std::any_of(candidates.begin(), candidates.end(), differ)) {
                 curr_pos++;
-                if (curr_pos >= original.size())
+                if (curr_pos >= ancestor.size())
                     break;
             }
             if (std::any_of(candidates.begin(), candidates.end(), differ))
@@ -114,9 +143,9 @@ std::vector<std::tuple<T, std::vector<T>>> diff(const T& original,
                 pos = map[curr_pos];
             }
             result.emplace_back(
-                T(original.begin() + original_pos, original.begin() + curr_pos),
+                T(ancestor.begin() + ancestor_pos, ancestor.begin() + curr_pos),
                 sequences);
-            original_pos = curr_pos;
+            ancestor_pos = curr_pos;
         } else {
             /* stable chunk */
             std::vector<T> sequences;
@@ -125,23 +154,23 @@ std::vector<std::tuple<T, std::vector<T>>> diff(const T& original,
                     T(str.begin() + pos, str.begin() + pos + i));
                 pos += i;
             }
-            result.emplace_back(T(original.begin() + original_pos,
-                                  original.begin() + original_pos + i),
+            result.emplace_back(T(ancestor.begin() + ancestor_pos,
+                                  ancestor.begin() + ancestor_pos + i),
                                 sequences);
-            original_pos += i;
+            ancestor_pos += i;
         }
     }
     auto unconsumed = [](const candidate& cand) {
         const auto& [pos, str, map] = cand;
         return pos < str.size();
     };
-    if (original_pos < original.size() ||
+    if (ancestor_pos < ancestor.size() ||
         std::any_of(candidates.begin(), candidates.end(), unconsumed)) {
         std::vector<T> sequences;
         for (auto& [pos, str, map] : candidates) {
             sequences.emplace_back(T(str.begin() + pos, str.end()));
         }
-        result.emplace_back(T(original.begin() + original_pos, original.end()),
+        result.emplace_back(T(ancestor.begin() + ancestor_pos, ancestor.end()),
                             sequences);
     }
     return result;
