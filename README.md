@@ -10,7 +10,9 @@ variations](http://www.xmailserver.org/diff2.pdf) by Myers.
 
 Distributed as a single-header C++17 library.
 
+<div align="center">
 <img src="https://raw.githubusercontent.com/lyxell/nway/master/.github/image.svg" alt="n-way merge with common ancestor">
+</div>
 
 ## Examples
 
