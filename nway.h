@@ -176,4 +176,46 @@ std::vector<std::tuple<T, std::vector<T>>> diff(const T& ancestor,
     return result;
 }
 
+/**
+ * Check whether a diff has a conflict.
+ */
+template <typename T>
+bool has_conflict(const std::vector<std::tuple<T, std::vector<T>>>& d) {
+    for (const auto& [original, candidates] : d) {
+        /* collect sequences that differ from original */
+        std::vector<size_t> unstable_idx;
+        for (size_t i = 0; i < candidates.size(); i++) {
+            if (candidates[i] != original) {
+                unstable_idx.emplace_back(i);
+            }
+        }
+        /* compare sequences that differ from original */
+        for (size_t i = 1; i < unstable_idx.size(); i++) {
+            if (candidates[unstable_idx[0]] != candidates[unstable_idx[i]]) {
+                return true;
+            }
+        }
+    }
+    return false;
+}
+
+/**
+ * Merge a diff into a single sequence. 
+ */
+template <typename T>
+T merge(const std::vector<std::tuple<T, std::vector<T>>>& d) {
+    T result;
+    for (const auto& [original, candidates] : d) {
+        auto element = original;
+        for (auto candidate : candidates) {
+            if (candidate != original) {
+                element = candidate;
+                break;
+            }
+        }
+        result.insert(result.end(), element.begin(), element.end());
+    }
+    return result;
+}
+
 } // namespace nway
