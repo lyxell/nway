@@ -79,8 +79,6 @@ std::unordered_map<size_t, size_t> longest_common_subsequence(const T& a,
                     x = v[k];
                     y = v[k] - k;
                     k = x - y;
-                    if (v.empty())
-                        break;
                     v = vs.back();
                     vs.pop_back();
                     d--;
