@@ -84,13 +84,6 @@ int main(int argc, char** argv) {
         "e",
     };
 
-    auto join = [](std::vector<std::string> strs) {
-        std::string res;
-        for (auto str : strs) {
-            res += str + "\n";
-        }
-        return res;
-    };
     auto diff = nway::diff(original, {a, b, c});
     assert(!nway::has_conflict(diff));
     // prints
