@@ -1,0 +1,23 @@
+\documentclass[tikz,crop]{standalone}
+\usepackage{fontspec}
+\setmainfont{Fira Code}
+\begin{document}
+\begin{tikzpicture}[scale=1.5]
+\node[thick,draw] (0) at (0,0) {hello world};
+\node[thick,draw] (1) at (3, 1.5) {\textbf{a }hello world};
+\node[thick,draw] (2) at (3, 0.5) {hello w\textbf{yy}rld\textbf{!!}};
+\node[thick,draw] (3) at (3,-0.5) {hello w\textbf{yy}rld};
+\node[thick,draw] (4) at (3,-1.5) {h\textbf{xx}llo world};
+\node[thick,draw] (5) at (6, 0) {a hxxllo wyyrld!!};
+
+\path[->,draw,thick] (0) edge [bend left=20]  (1);
+\path[->,draw,thick] (0) edge [bend left=15]  (2);
+\path[->,draw,thick] (0) edge [bend left=-15] (3);
+\path[->,draw,thick] (0) edge [bend left=-20] (4);
+
+\path[-,draw,thick,dashed] (1) edge [bend left=20]  (5);
+\path[-,draw,thick,dashed] (2) edge [bend left=15]  (5);
+\path[-,draw,thick,dashed] (3) edge [bend left=-15] (5);
+\path[-,draw,thick,dashed] (4) edge [bend left=-20] (5);
+\end{tikzpicture}
+\end{document}
