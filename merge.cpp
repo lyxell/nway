@@ -6,8 +6,9 @@
 #include <string>
 #include <tuple>
 
-std::map<size_t,size_t>
-longest_common_subsequence(const std::string& a, const std::string& b) {
+template <typename T>
+std::unordered_map<size_t, size_t>
+longest_common_subsequence(const T& a, const T& b) {
     std::vector<std::vector<size_t>> arr(a.size() + 1, std::vector<size_t>(b.size() + 1));
     for (size_t i = 0; i <= a.size(); i++) { 
         for (size_t j = 0; j <= b.size(); j++) { 
@@ -20,7 +21,7 @@ longest_common_subsequence(const std::string& a, const std::string& b) {
             }
         } 
     }
-    std::map<size_t,size_t> matchings;
+    std::unordered_map<size_t, size_t> matchings;
     size_t i = a.size();
     size_t j = b.size();
     while (i > 0 && j > 0) {
@@ -37,15 +38,15 @@ longest_common_subsequence(const std::string& a, const std::string& b) {
     return matchings;
 }
 
-using candidate = std::tuple<size_t, std::string, std::map<size_t,size_t>>;
-
 /**
  * diff3 algorithm generalized to any number of candidates
  * http://www.cis.upenn.edu/~bcpierce/papers/diff3-short.pdf
  */
-std::vector<std::tuple<std::string,std::vector<std::string>>>
-diff(const std::string& original, const std::vector<std::string>& strings) {
-    std::vector<std::tuple<std::string,std::vector<std::string>>> result;
+template <typename T>
+std::vector<std::tuple<T, std::vector<T>>>
+diff(const T& original, const std::vector<T>& strings) {
+    using candidate = std::tuple<size_t, T, std::unordered_map<size_t, size_t>>;
+    std::vector<std::tuple<T,std::vector<T>>> result;
     std::vector<candidate> candidates;
     for (auto& str : strings) {
         candidates.emplace_back(0, str, longest_common_subsequence(original, str));
@@ -74,21 +75,21 @@ diff(const std::string& original, const std::vector<std::string>& strings) {
                 if (curr_pos >= original.size()) break;
             }
             if (std::any_of(candidates.begin(), candidates.end(), differ)) break;
-            std::vector<std::string> sequences;
+            std::vector<T> sequences;
             for (auto& [pos, str, map] : candidates) {
-                sequences.emplace_back(str.substr(pos, map[curr_pos] - pos));
+                sequences.emplace_back(T(str.begin() + pos, str.begin () + map[curr_pos]));
                 pos = map[curr_pos];
             }
-            result.emplace_back(original.substr(original_pos, curr_pos - original_pos), sequences);
+            result.emplace_back(T(original.begin() + original_pos, original.begin() + curr_pos), sequences);
             original_pos = curr_pos;
         } else {
             /* stable chunk */
-            std::vector<std::string> sequences;
+            std::vector<T> sequences;
             for (auto& [pos, str, map] : candidates) {
-                sequences.emplace_back(str.substr(pos, i));
+                sequences.emplace_back(T(str.begin() + pos, str.begin() + pos + i));
                 pos += i;
             }
-            result.emplace_back(original.substr(original_pos, i), sequences);
+            result.emplace_back(T(original.begin() + original_pos, original.begin() + original_pos + i), sequences);
             original_pos += i;
         }
     }
@@ -97,34 +98,39 @@ diff(const std::string& original, const std::vector<std::string>& strings) {
         return pos < str.size();
     };
     if (original_pos < original.size() || std::any_of(candidates.begin(), candidates.end(), unconsumed)) {
-        std::vector<std::string> sequences;
+        std::vector<T> sequences;
         for (auto& [pos, str, map] : candidates) {
-            sequences.emplace_back(str.substr(pos));
+            sequences.emplace_back(T(str.begin() + pos, str.end()));
         }
-        result.emplace_back(original.substr(original_pos), sequences);
+        result.emplace_back(T(original.begin() + original_pos, original.end()), sequences);
     }
     return result;
 }
 
 int main() {
-    std::string o = "helloworld";
-    std::string a = "helloworlda";
-    std::string b = "hxxlloworldb";
+
+    std::string o_s = "helloworld";
+    std::string a_s = "helloworlda";
+    std::string b_s = "hxxlloworldb";
+
+    std::vector<char> o(o_s.begin(), o_s.end());
+    std::vector<char> a(a_s.begin(), a_s.end());
+    std::vector<char> b(b_s.begin(), b_s.end());
     auto res = diff(o, {a, b});
     for (auto [ov, x] : res) {
         auto oa = x[0];
         auto ob = x[1];
         if (oa == ob) {
-            std::cout << oa << std::endl;
+            std::cout << std::string(oa.begin(), oa.end()) << std::endl;
         } else if (ov == oa) {
-            std::cout << ob << std::endl;
+            std::cout << std::string(ob.begin(), ob.end()) << std::endl;
         } else if (ov == ob) {
-            std::cout << oa << std::endl;
+            std::cout << std::string(oa.begin(), oa.end()) << std::endl;
         } else {
             std::cout << "<<<<<<<" << std::endl;
-            std::cout << oa << std::endl;
+            std::cout << std::string(oa.begin(), oa.end()) << std::endl;
             std::cout << "=======" << std::endl;
-            std::cout << ob << std::endl;
+            std::cout << std::string(ob.begin(), ob.end()) << std::endl;
             std::cout << ">>>>>>>" << std::endl;
         }
     }
