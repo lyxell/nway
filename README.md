@@ -1,3 +1,7 @@
+<div align="center">
+<img src="https://raw.githubusercontent.com/lyxell/nway/master/.github/image.svg" alt="n-way merge with common ancestor">
+</div>
+
 # nway 
 
 Algorithms to perform n-way diff and merge of files with a common
@@ -9,10 +13,6 @@ algorithm described in [An O(ND) difference algorithm and its
 variations](http://www.xmailserver.org/diff2.pdf) by Myers.
 
 Distributed as a single-header C++17 library.
-
-<div align="center">
-<img src="https://raw.githubusercontent.com/lyxell/nway/master/.github/image.svg" alt="n-way merge with common ancestor">
-</div>
 
 ## Examples
 
