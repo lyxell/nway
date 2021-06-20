@@ -201,7 +201,7 @@ bool has_conflict(const std::vector<std::tuple<T, std::vector<T>>>& d) {
 }
 
 /**
- * Merge a diff into a single sequence. 
+ * Merge a diff into a single sequence.
  */
 template <typename T>
 T merge(const std::vector<std::tuple<T, std::vector<T>>>& d) {

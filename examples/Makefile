@@ -1,3 +1,6 @@
 CXXFLAGS=-std=c++17 -I..
 
-all: example
+all: merge_strings merge_files
+
+clean:
+	rm -rf merge_strings merge_files
