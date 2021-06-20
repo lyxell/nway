@@ -92,12 +92,11 @@ int main(int argc, char** argv) {
     };
     auto diff = nway::diff(original, {a, b, c});
     assert(!nway::has_conflict(diff));
-    /* prints
-       x
-       b
-       d
-       x
-     */
+    // prints
+    // x
+    // b
+    // d
+    // x
     for (auto line : nway::merge(diff)) {
         std::cout << line << std::endl;
     }
