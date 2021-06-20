@@ -15,9 +15,9 @@ Distributed as a single-header C++17 library.
 ### Merge strings
 
 ```c++
+#include <cassert>
 #include <iostream>
 #include <string>
-#include <cassert>
 
 #include <nway.h>
 
@@ -40,6 +40,7 @@ int main(int argc, char** argv) {
 #include <cassert>
 #include <iostream>
 #include <string>
+#include <vector>
 
 #include <nway.h>
 
