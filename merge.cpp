@@ -31,10 +31,9 @@ longest_common_subsequence(const T& a, const T& b) {
                 y++;
             }
             V[k] = x;
-            /* done? */
             if (x >= a.size() && y >= b.size()) {
-                std::unordered_map<size_t, size_t> matchings;
                 /* backtracking */
+                std::unordered_map<size_t, size_t> matchings;
                 while (Vs.size()) {
                     if (k == -D || (k != D && V[k-1] < V[k+1])) {
                         k++;
