@@ -14,7 +14,7 @@ Uses C++17.
 
 ## Examples
 
-### Strings
+### Merge strings
 
 ```c++
 #include <cassert>
