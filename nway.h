@@ -126,7 +126,7 @@ std::vector<std::tuple<T, std::vector<T>>> diff(const T& ancestor,
         }
         if (i == 0) {
             /* unstable chunk */
-            size_t curr_pos = ancestor_pos + 1;
+            size_t curr_pos = ancestor_pos;
             auto differ = [&curr_pos](const candidate& cand) {
                 const auto& [pos, str, map] = cand;
                 return map.find(curr_pos) == map.end();

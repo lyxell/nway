@@ -8,11 +8,17 @@ using namespace std::string_literals;
 
 int main(int argc, char** argv) {
     {
+        auto diff = nway::diff("b"s, {"ab"s,
+                                      "bc"s});
+        assert(!nway::has_conflict(diff));
+        assert(nway::merge(diff) == "abc"s);
+    }
+    {
         auto diff = nway::diff("hello world"s, {"hxxllo world"s,
                                                 "hello wyyrld"s,
-                                                "hello wyyrld!!"s});
+                                                "hellu wyyrld!!"s});
         assert(!nway::has_conflict(diff));
-        assert(nway::merge(diff) == "hxxllo wyyrld!!"s);
+        assert(nway::merge(diff) == "hxxllu wyyrld!!"s);
     }
     {
         auto diff = nway::diff("hello world"s, {});
