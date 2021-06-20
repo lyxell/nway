@@ -1,7 +1,8 @@
 #include <iostream>
 #include <string>
 #include <cassert>
-#include "../nway.h"
+
+#include <nway.h>
 
 using namespace std::string_literals;
 

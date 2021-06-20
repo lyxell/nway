@@ -8,13 +8,20 @@ by Khanna, Kunal and Pierce and the shortest edit script
 algorithm described in [An O(ND) difference algorithm and its
 variations](http://www.xmailserver.org/diff2.pdf) by Myers.
 
-## basic usage
+Distributed as a single-header library.
+
+Uses C++17.
+
+## Examples
+
+### Strings
 
 ```c++
+#include <cassert>
 #include <iostream>
 #include <string>
-#include <cassert>
-#include "../nway.h"
+
+#include <nway.h>
 
 using namespace std::string_literals;
 
