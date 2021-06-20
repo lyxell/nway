@@ -10,7 +10,7 @@ int main(int argc, char** argv) {
                                             "hello wyyrld"s,
                                             "hello wyyrld!!"s});
     assert(!nway::has_conflict(diff));
+    // prints hxxllo wyyrld!!
     std::cout << nway::merge(diff) << std::endl;
-    /* prints hxxllo wyyrld!! */
     return 0;
 }
