@@ -6,36 +6,59 @@
 #include <string>
 #include <tuple>
 
+/**
+ * Myers LCS algorithm
+ * http://btn1x4.inf.uni-bayreuth.de/publications/dotor_buchmann/SCM/ChefRepo/DiffUndMerge/DAlgorithmVariations.pdf
+ */
 template <typename T>
 std::unordered_map<size_t, size_t>
 longest_common_subsequence(const T& a, const T& b) {
-    std::vector<std::vector<size_t>> arr(a.size() + 1, std::vector<size_t>(b.size() + 1));
-    for (size_t i = 0; i <= a.size(); i++) { 
-        for (size_t j = 0; j <= b.size(); j++) { 
-            if (i == 0 || j == 0) {
-                arr[i][j] = 0; 
-            } else if (a[i - 1] == b[j - 1]) {
-                arr[i][j] = arr[i - 1][j - 1] + 1; 
+    std::unordered_map<long, long> V;
+    std::vector<decltype(V)> Vs;
+    for (long D = 0; D <= long(a.size() + b.size()); D++) {
+        Vs.emplace_back(V);
+        for (long k = -D; k <= D; k += 2) {
+            long x = 0;
+            long y = 0;
+            if (k == -D || (k != D && V[k-1] < V[k+1])) {
+                x = V[k + 1];
             } else {
-                arr[i][j] = std::max(arr[i - 1][j], arr[i][j - 1]); 
+                x = V[k - 1] + 1;
             }
-        } 
-    }
-    std::unordered_map<size_t, size_t> matchings;
-    size_t i = a.size();
-    size_t j = b.size();
-    while (i > 0 && j > 0) {
-        if (a[i-1] == b[j-1]) { 
-            matchings.emplace(i-1, j-1);
-            i--;
-            j--;
-        } else if (arr[i-1][j] > arr[i][j-1]) {
-            i--;
-        } else {
-            j--;
+            y = x - k;
+            while (x < a.size() && y < b.size() && a[x] == b[y]) {
+                x++;
+                y++;
+            }
+            V[k] = x;
+            /* done? */
+            if (x >= a.size() && y >= b.size()) {
+                std::unordered_map<size_t, size_t> matchings;
+                /* backtracking */
+                while (Vs.size()) {
+                    if (k == -D || (k != D && V[k-1] < V[k+1])) {
+                        k++;
+                    } else {
+                        k--;
+                    }
+                    while (x > V[k] && y > V[k] - k) {
+                        x--;
+                        y--;
+                        matchings.emplace(x, y);
+                    }
+                    x = V[k];
+                    y = V[k] - k;
+                    k = x - y;
+                    if (V.empty()) break;
+                    V = Vs.back();
+                    Vs.pop_back();
+                    D--;
+                }
+                return matchings;
+            }
         }
     }
-    return matchings;
+    return {};
 }
 
 /**
