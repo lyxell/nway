@@ -103,6 +103,9 @@ std::unordered_map<size_t, size_t> longest_common_subsequence(const T& a,
 template <typename T>
 std::vector<std::tuple<T, std::vector<T>>> diff(const T& ancestor,
                                                 const std::vector<T>& seqs) {
+    if (seqs.empty()) {
+        return {{ancestor, {}}};
+    }
     using candidate = std::tuple<size_t, T, std::unordered_map<size_t, size_t>>;
     std::vector<std::tuple<T, std::vector<T>>> result;
     std::vector<candidate> candidates;
