@@ -54,12 +54,12 @@ diff(const std::string& original, const std::vector<std::string>& strings) {
     while (true) {
         /* i is the number of positions for which all strings are aligned */
         int i = 0;
-        auto agree = [&original_pos, &i](const candidate& cand) {
+        auto is_aligned = [&original_pos, &i](const candidate& cand) {
             const auto& [pos, str, map] = cand;
             auto it = map.find(original_pos + i);
             return it != map.end() && it->second == pos + i;
         };
-        while (original_pos + i < original.size() && std::all_of(candidates.begin(), candidates.end(), agree)) {
+        while (original_pos + i < original.size() && std::all_of(candidates.begin(), candidates.end(), is_aligned)) {
             i++;
         }
         if (i == 0) {
