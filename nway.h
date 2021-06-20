@@ -1,60 +1,63 @@
+#pragma once
 #include <algorithm>
-#include <iostream>
-#include <map>
-#include <string>
 #include <tuple>
-#include <utility>
 #include <vector>
 
 namespace nway {
 
 /**
- * Myers LCS algorithm
- * http://btn1x4.inf.uni-bayreuth.de/publications/dotor_buchmann/SCM/ChefRepo/DiffUndMerge/DAlgorithmVariations.pdf
+ * Compute the longest common subsequence of A and B.
+ * Uses O(ND) time and O(D²) space where N = |A| + |B| and D is the size of the
+ * minimum edit script for A and B.
+ *
+ * Returns a map of matchings M such that (i,j) ∈ M ⇒ A[i] = B[j].
+ *
+ * See E. Myers (1986). "An O(ND) Difference Algorithm and Its Variations" for
+ * reference.
  */
 template <typename T>
 std::unordered_map<size_t, size_t> longest_common_subsequence(const T& a,
                                                               const T& b) {
-    std::unordered_map<long, long> V;
-    std::vector<decltype(V)> Vs;
-    for (long D = 0; D <= long(a.size() + b.size()); D++) {
-        Vs.emplace_back(V);
-        for (long k = -D; k <= D; k += 2) {
+    std::unordered_map<long, long> v;
+    std::vector<decltype(v)> vs;
+    for (long d = 0; d <= long(a.size() + b.size()); d++) {
+        vs.emplace_back(v);
+        for (long k = -d; k <= d; k += 2) {
             long x = 0;
             long y = 0;
-            if (k == -D || (k != D && V[k - 1] < V[k + 1])) {
-                x = V[k + 1];
+            if (k == -d || (k != d && v[k - 1] < v[k + 1])) {
+                x = v[k + 1];
             } else {
-                x = V[k - 1] + 1;
+                x = v[k - 1] + 1;
             }
             y = x - k;
             while (x < a.size() && y < b.size() && a[x] == b[y]) {
                 x++;
                 y++;
             }
-            V[k] = x;
+            v[k] = x;
             if (x >= a.size() && y >= b.size()) {
                 /* backtracking */
                 std::unordered_map<size_t, size_t> matchings;
-                while (Vs.size()) {
-                    if (k == -D || (k != D && V[k - 1] < V[k + 1])) {
+                while (vs.size()) {
+                    if (k == -d || (k != d && v[k - 1] < v[k + 1])) {
                         k++;
                     } else {
                         k--;
                     }
-                    while (x > V[k] && y > V[k] - k) {
+                    while (x > v[k] && y > v[k] - k) {
                         x--;
                         y--;
                         matchings.emplace(x, y);
                     }
-                    x = V[k];
-                    y = V[k] - k;
+                    x = v[k];
+                    y = v[k] - k;
                     k = x - y;
-                    if (V.empty())
+                    if (v.empty())
                         break;
-                    V = Vs.back();
-                    Vs.pop_back();
-                    D--;
+                    v = vs.back();
+                    vs.pop_back();
+                    d--;
                 }
                 return matchings;
             }
@@ -69,17 +72,17 @@ std::unordered_map<size_t, size_t> longest_common_subsequence(const T& a,
  */
 template <typename T>
 std::vector<std::tuple<T, std::vector<T>>> diff(const T& original,
-                                                const std::vector<T>& strings) {
+                                                const std::vector<T>& seqs) {
     using candidate = std::tuple<size_t, T, std::unordered_map<size_t, size_t>>;
     std::vector<std::tuple<T, std::vector<T>>> result;
     std::vector<candidate> candidates;
-    for (auto& str : strings) {
-        candidates.emplace_back(0, str,
-                                longest_common_subsequence(original, str));
+    for (auto& seq : seqs) {
+        candidates.emplace_back(0, seq,
+                                longest_common_subsequence(original, seq));
     }
     size_t original_pos = 0;
     while (true) {
-        /* i is the number of positions for which all strings are aligned */
+        /* i is the number of positions for which all sequences are aligned */
         int i = 0;
         auto is_aligned = [&original_pos, &i](const candidate& cand) {
             const auto& [pos, str, map] = cand;
