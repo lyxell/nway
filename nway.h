@@ -42,7 +42,7 @@ namespace nway {
  * variations." Algorithmica 1.1-4 (1986): 251-266.
  */
 template <typename T>
-std::unordered_map<size_t, size_t> longest_common_subsequence(const T& a,
+std::vector<std::optional<size_t>> longest_common_subsequence(const T& a,
                                                               const T& b) {
     std::unordered_map<long, long> v;
     std::vector<decltype(v)> vs;
@@ -64,7 +64,7 @@ std::unordered_map<size_t, size_t> longest_common_subsequence(const T& a,
             v[k] = x;
             if (x >= a.size() && y >= b.size()) {
                 /* backtracking */
-                std::unordered_map<size_t, size_t> matchings;
+                std::vector<std::optional<size_t>> matchings(a.size(), std::nullopt);
                 while (vs.size()) {
                     if (k == -d || (k != d && v[k - 1] < v[k + 1])) {
                         k++;
@@ -74,7 +74,7 @@ std::unordered_map<size_t, size_t> longest_common_subsequence(const T& a,
                     while (x > v[k] && y > v[k] - k) {
                         x--;
                         y--;
-                        matchings.emplace(x, y);
+                        matchings[x] = y;
                     }
                     x = v[k];
                     y = v[k] - k;
@@ -104,10 +104,12 @@ std::vector<std::tuple<T, std::vector<T>>> diff(const T& ancestor,
     if (seqs.empty()) {
         return {{ancestor, {}}};
     }
-    using candidate = std::tuple<size_t, T, std::unordered_map<size_t, size_t>>;
+    using candidate = std::tuple<size_t, T, std::vector<std::optional<size_t>>>;
     std::vector<std::tuple<T, std::vector<T>>> result;
     std::vector<candidate> candidates;
+    size_t min_length = ancestor.size();
     for (auto& seq : seqs) {
+        min_length = std::min(min_length, seq.size());
         candidates.emplace_back(0, seq,
                                 longest_common_subsequence(ancestor, seq));
     }
@@ -117,8 +119,7 @@ std::vector<std::tuple<T, std::vector<T>>> diff(const T& ancestor,
         int i = 0;
         auto is_aligned = [&ancestor_pos, &i](const candidate& cand) {
             const auto& [pos, str, map] = cand;
-            auto it = map.find(ancestor_pos + i);
-            return it != map.end() && it->second == pos + i;
+            return map.at(ancestor_pos + i) && map.at(ancestor_pos + i) == pos + i;
         };
         while (ancestor_pos + i < ancestor.size() &&
                std::all_of(candidates.begin(), candidates.end(), is_aligned)) {
@@ -129,20 +130,17 @@ std::vector<std::tuple<T, std::vector<T>>> diff(const T& ancestor,
             size_t curr_pos = ancestor_pos;
             auto differ = [&curr_pos](const candidate& cand) {
                 const auto& [pos, str, map] = cand;
-                return map.find(curr_pos) == map.end();
+                return !map.at(curr_pos).has_value();
             };
-            while (std::any_of(candidates.begin(), candidates.end(), differ)) {
+            while (curr_pos < min_length && std::any_of(candidates.begin(), candidates.end(), differ)) {
                 curr_pos++;
-                if (curr_pos >= ancestor.size())
-                    break;
             }
-            if (std::any_of(candidates.begin(), candidates.end(), differ))
-                break;
+            if (curr_pos >= min_length) break;
             std::vector<T> sequences;
             for (auto& [pos, str, map] : candidates) {
                 sequences.emplace_back(
-                    T(str.begin() + pos, str.begin() + map[curr_pos]));
-                pos = map[curr_pos];
+                    T(str.begin() + pos, str.begin() + *map.at(curr_pos)));
+                pos = *map.at(curr_pos);
             }
             result.emplace_back(
                 T(ancestor.begin() + ancestor_pos, ancestor.begin() + curr_pos),
@@ -174,82 +172,6 @@ std::vector<std::tuple<T, std::vector<T>>> diff(const T& ancestor,
         }
         result.emplace_back(T(ancestor.begin() + ancestor_pos, ancestor.end()),
                             sequences);
-    }
-    return result;
-}
-
-/**
- * Template specialization for std::string_view
- */
-template<>
-inline std::vector<std::tuple<std::string_view, std::vector<std::string_view>>> diff(const std::string_view& ancestor,
-                                                const std::vector<std::string_view>& seqs) {
-    if (seqs.empty()) {
-        return {{ancestor, {}}};
-    }
-    using candidate = std::tuple<size_t, std::string_view, std::unordered_map<size_t, size_t>>;
-    std::vector<std::tuple<std::string_view, std::vector<std::string_view>>> result;
-    std::vector<candidate> candidates;
-    for (auto& seq : seqs) {
-        candidates.emplace_back(0, seq,
-                                longest_common_subsequence(ancestor, seq));
-    }
-    size_t ancestor_pos = 0;
-    while (true) {
-        /* i is the number of positions for which all sequences are aligned */
-        int i = 0;
-        auto is_aligned = [&ancestor_pos, &i](const candidate& cand) {
-            const auto& [pos, str, map] = cand;
-            auto it = map.find(ancestor_pos + i);
-            return it != map.end() && it->second == pos + i;
-        };
-        while (ancestor_pos + i < ancestor.size() &&
-               std::all_of(candidates.begin(), candidates.end(), is_aligned)) {
-            i++;
-        }
-        if (i == 0) {
-            /* unstable chunk */
-            size_t curr_pos = ancestor_pos;
-            auto differ = [&curr_pos](const candidate& cand) {
-                const auto& [pos, str, map] = cand;
-                return map.find(curr_pos) == map.end();
-            };
-            while (std::any_of(candidates.begin(), candidates.end(), differ)) {
-                curr_pos++;
-                if (curr_pos >= ancestor.size())
-                    break;
-            }
-            if (std::any_of(candidates.begin(), candidates.end(), differ))
-                break;
-            std::vector<std::string_view> sequences;
-            for (auto& [pos, str, map] : candidates) {
-                sequences.emplace_back(str.substr(pos, map[curr_pos] - pos));
-                pos = map[curr_pos];
-            }
-            result.emplace_back(ancestor.substr(ancestor_pos, curr_pos - ancestor_pos), sequences);
-            ancestor_pos = curr_pos;
-        } else {
-            /* stable chunk */
-            std::vector<std::string_view> sequences;
-            for (auto& [pos, str, map] : candidates) {
-                sequences.emplace_back(str.substr(pos, i));
-                pos += i;
-            }
-            result.emplace_back(ancestor.substr(ancestor_pos, i), sequences);
-            ancestor_pos += i;
-        }
-    }
-    auto unconsumed = [](const candidate& cand) {
-        const auto& [pos, str, map] = cand;
-        return pos < str.size();
-    };
-    if (ancestor_pos < ancestor.size() ||
-        std::any_of(candidates.begin(), candidates.end(), unconsumed)) {
-        std::vector<std::string_view> sequences;
-        for (auto& [pos, str, map] : candidates) {
-            sequences.emplace_back(str.substr(pos));
-        }
-        result.emplace_back(ancestor.substr(ancestor_pos), sequences);
     }
     return result;
 }
