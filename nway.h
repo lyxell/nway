@@ -179,26 +179,33 @@ std::vector<std::tuple<T, std::vector<T>>> diff(const T& ancestor,
 }
 
 /**
+ * Check whether a hunk has a conflict.
+ */
+template <typename T>
+bool hunk_has_conflict(const std::tuple<T, std::vector<T>>& hunk) {
+    const auto& [original, candidates] = hunk;
+    /* collect sequences that differ from original */
+    std::vector<size_t> unstable_idx;
+    for (size_t i = 0; i < candidates.size(); i++) {
+        if (candidates[i] != original) {
+            unstable_idx.emplace_back(i);
+        }
+    }
+    /* compare sequences that differ from original */
+    for (size_t i = 1; i < unstable_idx.size(); i++) {
+        if (candidates[unstable_idx[0]] != candidates[unstable_idx[i]]) {
+            return true;
+        }
+    }
+    return false;
+}
+
+/**
  * Check whether a diff has a conflict.
  */
 template <typename T>
 bool has_conflict(const std::vector<std::tuple<T, std::vector<T>>>& d) {
-    for (const auto& [original, candidates] : d) {
-        /* collect sequences that differ from original */
-        std::vector<size_t> unstable_idx;
-        for (size_t i = 0; i < candidates.size(); i++) {
-            if (candidates[i] != original) {
-                unstable_idx.emplace_back(i);
-            }
-        }
-        /* compare sequences that differ from original */
-        for (size_t i = 1; i < unstable_idx.size(); i++) {
-            if (candidates[unstable_idx[0]] != candidates[unstable_idx[i]]) {
-                return true;
-            }
-        }
-    }
-    return false;
+    return std::any_of(d.begin(), d.end(), hunk_has_conflict<T>);
 }
 
 /**
