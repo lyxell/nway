@@ -179,6 +179,82 @@ std::vector<std::tuple<T, std::vector<T>>> diff(const T& ancestor,
 }
 
 /**
+ * Template specialization for std::string_view
+ */
+template<>
+inline std::vector<std::tuple<std::string_view, std::vector<std::string_view>>> diff(const std::string_view& ancestor,
+                                                const std::vector<std::string_view>& seqs) {
+    if (seqs.empty()) {
+        return {{ancestor, {}}};
+    }
+    using candidate = std::tuple<size_t, std::string_view, std::unordered_map<size_t, size_t>>;
+    std::vector<std::tuple<std::string_view, std::vector<std::string_view>>> result;
+    std::vector<candidate> candidates;
+    for (auto& seq : seqs) {
+        candidates.emplace_back(0, seq,
+                                longest_common_subsequence(ancestor, seq));
+    }
+    size_t ancestor_pos = 0;
+    while (true) {
+        /* i is the number of positions for which all sequences are aligned */
+        int i = 0;
+        auto is_aligned = [&ancestor_pos, &i](const candidate& cand) {
+            const auto& [pos, str, map] = cand;
+            auto it = map.find(ancestor_pos + i);
+            return it != map.end() && it->second == pos + i;
+        };
+        while (ancestor_pos + i < ancestor.size() &&
+               std::all_of(candidates.begin(), candidates.end(), is_aligned)) {
+            i++;
+        }
+        if (i == 0) {
+            /* unstable chunk */
+            size_t curr_pos = ancestor_pos;
+            auto differ = [&curr_pos](const candidate& cand) {
+                const auto& [pos, str, map] = cand;
+                return map.find(curr_pos) == map.end();
+            };
+            while (std::any_of(candidates.begin(), candidates.end(), differ)) {
+                curr_pos++;
+                if (curr_pos >= ancestor.size())
+                    break;
+            }
+            if (std::any_of(candidates.begin(), candidates.end(), differ))
+                break;
+            std::vector<std::string_view> sequences;
+            for (auto& [pos, str, map] : candidates) {
+                sequences.emplace_back(str.substr(pos, map[curr_pos] - pos));
+                pos = map[curr_pos];
+            }
+            result.emplace_back(ancestor.substr(ancestor_pos, curr_pos - ancestor_pos), sequences);
+            ancestor_pos = curr_pos;
+        } else {
+            /* stable chunk */
+            std::vector<std::string_view> sequences;
+            for (auto& [pos, str, map] : candidates) {
+                sequences.emplace_back(str.substr(pos, i));
+                pos += i;
+            }
+            result.emplace_back(ancestor.substr(ancestor_pos, i), sequences);
+            ancestor_pos += i;
+        }
+    }
+    auto unconsumed = [](const candidate& cand) {
+        const auto& [pos, str, map] = cand;
+        return pos < str.size();
+    };
+    if (ancestor_pos < ancestor.size() ||
+        std::any_of(candidates.begin(), candidates.end(), unconsumed)) {
+        std::vector<std::string_view> sequences;
+        for (auto& [pos, str, map] : candidates) {
+            sequences.emplace_back(str.substr(pos));
+        }
+        result.emplace_back(ancestor.substr(ancestor_pos), sequences);
+    }
+    return result;
+}
+
+/**
  * Check whether a hunk has a conflict.
  */
 template <typename T>
