@@ -42,8 +42,7 @@ namespace nway {
  * variations." Algorithmica 1.1-4 (1986): 251-266.
  */
 template <typename T>
-std::vector<std::optional<size_t>> longest_common_subsequence(const T& a,
-                                                              const T& b) {
+std::vector<std::optional<size_t>> lcs(const T& a, const T& b) {
     std::unordered_map<long, long> v;
     std::vector<decltype(v)> vs;
     for (long d = 0; d <= long(a.size() + b.size()); d++) {
@@ -111,8 +110,7 @@ std::vector<std::tuple<T, std::vector<T>>> diff(const T& ancestor,
     size_t min_length = ancestor.size();
     for (auto& seq : seqs) {
         min_length = std::min(min_length, seq.size());
-        candidates.emplace_back(0, seq,
-                                longest_common_subsequence(ancestor, seq));
+        candidates.emplace_back(0, seq, lcs(ancestor, seq));
     }
     size_t ancestor_pos = 0;
     while (true) {
