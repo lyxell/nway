@@ -64,7 +64,8 @@ std::vector<std::optional<size_t>> longest_common_subsequence(const T& a,
             v[k] = x;
             if (x >= a.size() && y >= b.size()) {
                 /* backtracking */
-                std::vector<std::optional<size_t>> matchings(a.size(), std::nullopt);
+                std::vector<std::optional<size_t>> matchings(a.size(),
+                                                             std::nullopt);
                 while (vs.size()) {
                     if (k == -d || (k != d && v[k - 1] < v[k + 1])) {
                         k++;
@@ -119,7 +120,7 @@ std::vector<std::tuple<T, std::vector<T>>> diff(const T& ancestor,
         int i = 0;
         auto is_aligned = [&ancestor_pos, &i](const candidate& cand) {
             const auto& [pos, str, map] = cand;
-            return map.at(ancestor_pos + i) && map.at(ancestor_pos + i) == pos + i;
+            return map[ancestor_pos + i] && map[ancestor_pos + i] == pos + i;
         };
         while (ancestor_pos + i < ancestor.size() &&
                std::all_of(candidates.begin(), candidates.end(), is_aligned)) {
@@ -130,17 +131,19 @@ std::vector<std::tuple<T, std::vector<T>>> diff(const T& ancestor,
             size_t curr_pos = ancestor_pos;
             auto differ = [&curr_pos](const candidate& cand) {
                 const auto& [pos, str, map] = cand;
-                return !map.at(curr_pos).has_value();
+                return !map[curr_pos].has_value();
             };
-            while (curr_pos < min_length && std::any_of(candidates.begin(), candidates.end(), differ)) {
+            while (curr_pos < min_length &&
+                   std::any_of(candidates.begin(), candidates.end(), differ)) {
                 curr_pos++;
             }
-            if (curr_pos >= min_length) break;
+            if (curr_pos >= min_length)
+                break;
             std::vector<T> sequences;
             for (auto& [pos, str, map] : candidates) {
                 sequences.emplace_back(
-                    T(str.begin() + pos, str.begin() + *map.at(curr_pos)));
-                pos = *map.at(curr_pos);
+                    T(str.begin() + pos, str.begin() + *map[curr_pos]));
+                pos = *map[curr_pos];
             }
             result.emplace_back(
                 T(ancestor.begin() + ancestor_pos, ancestor.begin() + curr_pos),
